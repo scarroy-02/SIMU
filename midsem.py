@@ -189,7 +189,7 @@ def b_k_multi(k, n):
     end_time = time.time()
     execution_time = end_time - start_time
 
-    print(f"Execution time: {execution_time:.4f} seconds")
+    print(f"Execution time for b_{k}: {execution_time:.4f} seconds")
 
     # Sum the elements in the queue.
     total = 0
@@ -214,7 +214,7 @@ with open(f"rohitroy.txt","w") as file:
         else:
             A_k = a_k_multi(k,4)
             B_k = b_k_multi(k,4)
-        file.write(f"k \t\t= {k}\n2^k \t= {2**k}\na_{k} \t= {A_k}\nb_k \t= {B_k}\n\n")
+        file.write(f"k \t\t= {k}\n2^k \t= {2**k}\na_{k} \t= {A_k}\nb_{k} \t= {B_k}\n\n")
 
 file.close()
 

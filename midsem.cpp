@@ -2,6 +2,7 @@
 #include <cmath>
 #include <vector>
 #include <chrono>
+#include <random>
 
 double H(int N, double a, double x) {
     double num = std::sqrt(N);
@@ -31,11 +32,11 @@ double f_5(double x[6]) {
 
 
 double f_6(double x[6]) {
-    return std::exp(-(H(25, M_PI, x[0]) + H(31, 9.33, x[2]) + H(47, 1.2, x[3])));
+    return 1 / (H(25, M_PI, x[0]) + H(31, 9.33, x[2]) + H(47, 1.2, x[3]));
 }
 
 double f(double x[6]) {
-    return (f_1(x) * f_2(x) + f_3(x) * f_5(x) + f_4(x)) * f_6(x);
+    return (f_1(x) + f_2(x) + f_3(x) + f_5(x) + f_4(x)) * f_6(x);
 }
 
 double y(double t, int k) { return (2 * t - 1) / (2 * k); };
@@ -59,13 +60,32 @@ double a_k(int k) {
     return sum / std::pow(k, 6);
 }
 
+double b_k_single(int k) {
+
+    double total_sum = 0.0;
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<> dis(0.0,1.0);
+
+    for (int i = 0; i < k * k * k * k * k * k; i++) {
+        double sample[6];
+        for (int m = 0; m < 6; m++) {
+            sample[m] = dis(gen);
+        }
+        total_sum += f(sample);
+    }
+
+    // Returning the normalized sum.
+    return total_sum / pow(k, 6);
+}
 
 int main() {
-    int k = 20; // You can change this to your desired value of k.
+    int k = 40; // You can change this to your desired value of k.
 
     auto start_time = std::chrono::high_resolution_clock::now();
 
-    double result = a_k(k);
+    double result = b_k_single(k);
 
     auto end_time = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::seconds>(end_time - start_time);

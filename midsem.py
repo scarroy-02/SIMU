@@ -15,6 +15,7 @@ import itertools
 import time
 import multiprocessing
 from tqdm import tqdm
+import os
 
 np.random.seed(17)         # Setting the seed for the entire program.
 
@@ -43,10 +44,10 @@ def f_5(x):
     return abs(H(5,3.37,x[5]) - H(7,0.97,x[1]))
 
 def f_6(x):
-    return math.exp(-(H(25,math.pi,x[0]) + H(31,9.33,x[2]) + H(47,1.2,x[3])))
+    return 1 / (H(25,math.pi,x[0]) + H(31,9.33,x[2]) + H(47,1.2,x[3]))
 
 def f(x):
-    return (f_1(x) * f_2(x) + f_3(x) * f_5(x) + f_4(x)) * f_6(x)
+    return (f_1(x) + f_2(x) + f_3(x) + f_5(x) + f_4(x)) * f_6(x)
 
 ##########################################################
 # Below we write the functions for the calculation of a_k.
@@ -203,20 +204,35 @@ Now we write to file "rohitroy.txt" the values of k,2^k,a_k,b_k for the given va
 '''
 
 # Making a list of all the values of k which we have to compute.
-k_val = [10,12,14,16,18,20,25,30,36,40]
+k_val = [10,11,12,13,14,15,16,17,18,19,20]
 
-with open(f"rohitroy.txt","w") as file:
-    # Now to decide on the number of processors, we have to make sure the required number of iterations is divisible by the number, otherwise we can't divide the task equally.
-    for k in k_val:
-        if k == 25:
-            A_k = a_k_multi(k,5)
-            B_k = b_k_multi(k,5)
-        else:
-            A_k = a_k_multi(k,4)
-            B_k = b_k_multi(k,4)
-        file.write(f"k \t\t= {k}\n2^k \t= {2**k}\na_{k} \t= {A_k}\nb_{k} \t= {B_k}\n\n")
+# Getting the CPU count
+n_cores = os.cpu_count()
 
-file.close()
+# This part is to recognise the main process which is to run.
+if __name__ == "__main__":
 
-# Printing to indicate the end of the program.
-print("Output Written to file.")
+    with open(f"rohitroy_new_seed17.txt","w") as file:
+        # Now to decide on the number of processors, we have to make sure the required number of iterations is divisible by the number, otherwise we can't divide the task equally.    
+        for k in k_val:
+            divisors = []
+            for d in range(1,n_cores+1):
+                if (k**2)%d == 0:
+                    divisors.append(d)
+            cores_used = max(divisors)
+            print(f"Cores used for k = {k} : {cores_used}")
+            A_k = a_k_multi(k,cores_used)
+            B_k = b_k_multi(k,cores_used)
+            print(f"a_{k} = {A_k}")
+            print(f"b_{k} = {B_k}")
+            file.write(f"k \t\t= {k}\n2^k \t= {2**k}\na_{k} \t= {A_k}\nb_{k} \t= {B_k}\n\n")
+
+    file.close()
+
+    # Printing to indicate the end of the program.
+    print("Output Written to file.")
+
+
+'''
+From the output in the file, the fluctuations of the integral estimation by a_k and b_k are evident. As the value of k goes to infinity, they will converge to the actual integral, but for these small values, it is hard to say where exactly will it go. Another point is that to evaluate the values of a_k and b_k for relatively smaller values of k (>30) takes a lot of time (e.g. it took 3-3.5 hours for a_40 and b_40 each, even with multiprocessing) due to k^6 iterations each time.
+'''

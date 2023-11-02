@@ -3,6 +3,10 @@
 #include <vector>
 #include <chrono>
 #include <random>
+#include <fstream>
+#include <pthread.h>
+
+// using namespace std;
 
 double H(int N, double a, double x) {
     double num = std::sqrt(N);
@@ -11,7 +15,7 @@ double H(int N, double a, double x) {
 }
 
 double f_1(double x[6]) {
-    return H(3, M_PI, x[0]) * H(4, 1.37, x[1]);
+    return H(3, M_PI, x[0]) * H(2, 1.37, x[1]);
 }
 
 double f_2(double x[6]) {
@@ -19,24 +23,24 @@ double f_2(double x[6]) {
 }
 
 double f_3(double x[6]) {
-    return std::min(H(4, M_E, x[4]), std::min(H(5, 1.2, x[1]), H(3, 1.37, x[5])));
+    return std::min(H(2, M_E, x[4]), std::min(H(2, 1.2, x[1]), H(3, 1.37, x[5])));
 }
 
 double f_4(double x[6]) {
-    return std::max(H(3, 1 / M_PI, x[0]), std::max(H(7, 0.9734, x[1]), H(4, std::sqrt(7), x[3])));
+    return std::max(H(3, 1 / M_PI, x[0]), std::max(H(2, 0.9734, x[1]), H(2, std::sqrt(7), x[3])));
 }
 
 double f_5(double x[6]) {
-    return std::abs(H(5, 3.37, x[5]) - H(7, 0.97, x[1]));
+    return std::abs(H(2, 3.37, x[5]) - H(3, 4.97, x[1]));
 }
 
 
 double f_6(double x[6]) {
-    return 1 / (H(25, M_PI, x[0]) + H(31, 9.33, x[2]) + H(47, 1.2, x[3]));
+    return 1 / (-(H(2, M_PI, x[0]) + H(3, 9.33, x[2]) + H(2, 10.2, x[3])));
 }
 
 double f(double x[6]) {
-    return (f_1(x) + f_2(x) + f_3(x) + f_5(x) + f_4(x)) * f_6(x);
+    return (f_1(x) * f_2(x) + f_3(x) * f_5(x) + f_4(x)) * f_6(x);
 }
 
 double y(double t, int k) { return (2 * t - 1) / (2 * k); };
@@ -68,12 +72,15 @@ double b_k_single(int k) {
     std::mt19937 gen(rd());
     std::uniform_real_distribution<> dis(0.0,1.0);
 
-    for (int i = 0; i < k * k * k * k * k * k; i++) {
-        double sample[6];
-        for (int m = 0; m < 6; m++) {
-            sample[m] = dis(gen);
+    for (int i = 0; i < k * k * k; i++) {
+        double sample[k*k*k][6];
+        for (int j = 0; j < k*k*k; j++) { 
+            for (int m = 0; m < 6; m++) {
+                sample[j][m] = dis(gen);
+            }
+            total_sum += f(sample[j]);
         }
-        total_sum += f(sample);
+    
     }
 
     // Returning the normalized sum.
@@ -81,16 +88,37 @@ double b_k_single(int k) {
 }
 
 int main() {
-    int k = 40; // You can change this to your desired value of k.
+    int k[7] = {10,12,14,16,18,20,25}; // You can change this to your desired value of k.
 
     auto start_time = std::chrono::high_resolution_clock::now();
+    
+    std::ofstream File;
+    File.open ("output.txt");
 
-    double result = b_k_single(k);
+    for (int i = 0; i < 7; i++){
+        double result1 = a_k(k[i]);
+        double result2 = b_k_single(k[i]);
+        File << "k = \t";
+        File << k[i];
+        File << "\n";
+        File << "2^k = \t";
+        File << std::pow(2,k[i]);
+        File << "\n";
+        File << "a_k = \t";
+        File << result1;
+        File << "\n";
+        File << "b_k = \t";
+        File << result2;
+        File << "\n\n";
+        auto end_time = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::seconds>(end_time - start_time);
+        std::cout << "k: " << k[i] << std::endl;
+        std::cout << "Result a_k: " << result1 << std::endl;
+        std::cout << "Result b_k: " << result2 << std::endl;
+        std::cout << "Time taken: " << duration.count() << " seconds" << std::endl;
+    }
+    
+    File.close();
 
-    auto end_time = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::seconds>(end_time - start_time);
-
-    std::cout << "Result: " << result << std::endl;
-    std::cout << "Time taken: " << duration.count() << " seconds" << std::endl;
     return 0;
 }
